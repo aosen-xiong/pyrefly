@@ -66,6 +66,7 @@ use crate::commands::files::get_config_finder_for_snippet;
 use crate::commands::util::CommandExitStatus;
 use crate::config::error_kind::Severity;
 use crate::config::finder::ConfigFinder;
+use crate::diagnosis_trace;
 use crate::error::error::Error;
 use crate::error::error::ErrorRenderer;
 use crate::error::error::print_error_counts;
@@ -259,6 +260,9 @@ struct OutputArgs {
     /// Report type traces.
     #[arg(long, value_name = "OUTPUT_FILE")]
     report_trace: Option<PathBuf>,
+    /// Export source-level type diagnosis trace events as JSONL.
+    #[arg(long, value_name = "OUTPUT_FILE")]
+    export_type_trace: Option<PathBuf>,
     /// Experimental: generate a JSON dependency graph of all modules to the specified file. This is unstable and should only be used for debugging.
     #[arg(long, value_name = "OUTPUT_FILE")]
     dependency_graph: Option<PathBuf>,
@@ -967,6 +971,9 @@ impl CheckArgs {
         }
 
         let state = Forgetter::new(State::new(config_finder, thread_count), true);
+        if let Some(path) = &self.output.export_type_trace {
+            diagnosis_trace::init(path)?;
+        }
         let require_levels = self.get_required_levels();
         let mut transaction = Forgetter::new(
             state.as_ref().new_transaction(require_levels.default, None),
@@ -998,6 +1005,9 @@ impl CheckArgs {
             upsell,
         )?;
         let check_result = CheckResult::from_errors(&errors, &relative_to, checked_file_count);
+        if self.output.export_type_trace.is_some() {
+            diagnosis_trace::finish()?;
+        }
         Ok((status, errors, check_result))
     }
 
@@ -1013,6 +1023,9 @@ impl CheckArgs {
         let module_name = ModuleName::from_str("__main__");
 
         let holder = Forgetter::new(State::new(config_finder, thread_count), true);
+        if let Some(path) = &self.output.export_type_trace {
+            diagnosis_trace::init(path)?;
+        }
 
         // Create a single handle for the virtual module
         let config = holder
@@ -1054,6 +1067,9 @@ impl CheckArgs {
             // Snippet checks are interactive ad-hoc inputs — never upsell.
             UpsellDecision::Skip,
         )?;
+        if self.output.export_type_trace.is_some() {
+            diagnosis_trace::finish()?;
+        }
         Ok((status, CheckResult::from_errors(&errors, &relative_to, 1)))
     }
 
@@ -1347,6 +1363,9 @@ impl CheckArgs {
                 e.range().end(),
             )
         });
+        for error in &output_errors {
+            diagnosis_trace::record_diagnostic(error);
+        }
 
         if let Some(path) = &self.output.output {
             write_errors_to_file(output_format, path, relative_to.as_path(), &output_errors)?;

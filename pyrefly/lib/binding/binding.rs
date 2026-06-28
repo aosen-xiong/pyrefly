@@ -1903,6 +1903,7 @@ pub struct ClassBinding {
 
 #[derive(Clone, Debug)]
 pub struct ReturnExplicit {
+    pub function: ShortIdentifier,
     pub annot: Option<Idx<KeyAnnotation>>,
     pub expr: Option<Box<Expr>>,
     pub is_generator: bool,

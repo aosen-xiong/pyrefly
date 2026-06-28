@@ -30,6 +30,7 @@ pub mod binding;
 #[doc(hidden)]
 pub mod commands;
 mod compat;
+mod diagnosis_trace;
 mod error;
 mod export;
 #[doc(hidden)]

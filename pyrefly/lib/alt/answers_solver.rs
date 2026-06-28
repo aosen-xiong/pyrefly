@@ -72,6 +72,7 @@ use crate::binding::table::TableKeyed;
 use crate::config::base::RecursionLimitConfig;
 use crate::config::base::RecursionOverflowHandler;
 use crate::config::error_kind::ErrorKind;
+use crate::diagnosis_trace;
 use crate::dispatch_anyidx;
 use crate::error::collector::ErrorCollector;
 use crate::error::context::ErrorContext;
@@ -3148,12 +3149,37 @@ impl<'a, Ans: LookupAnswer> AnswersSolver<'a, Ans> {
                 _ => self.is_subset_eq_with_reason(got, want),
             },
         };
+        let trace_context = if diagnosis_trace::is_enabled() {
+            Some((options.context)())
+        } else {
+            None
+        };
         match subset_result {
             Ok(()) => {
+                if let Some(trace_context) = &trace_context {
+                    diagnosis_trace::record_type_obligation(
+                        self.module(),
+                        loc,
+                        trace_context,
+                        self.for_display(got.clone()).deterministic_printing().to_string(),
+                        self.for_display(want.clone()).deterministic_printing().to_string(),
+                        "ok",
+                    );
+                }
                 self.check_string_as_iterable(got, want, loc, options.errors);
                 true
             }
             Err(error) => {
+                if let Some(trace_context) = &trace_context {
+                    diagnosis_trace::record_type_obligation(
+                        self.module(),
+                        loc,
+                        trace_context,
+                        self.for_display(got.clone()).deterministic_printing().to_string(),
+                        self.for_display(want.clone()).deterministic_printing().to_string(),
+                        "error",
+                    );
+                }
                 self.report_type_error(got, want, options.errors, loc, options.context, error);
                 false
             }

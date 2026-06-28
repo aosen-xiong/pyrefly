@@ -3697,9 +3697,11 @@ impl<'a, Ans: LookupAnswer> AnswersSolver<'a, Ans> {
                 (!hints.is_empty()).then(|| self.unions(hints))
             });
             let annot_range = x.annot.and_then(|k| self.annotation_range(k));
+            let return_slot = format!("function:{}:return", self.module().display(&x.function));
             let tcc: &dyn Fn() -> TypeCheckContext = &|| {
                 TypeCheckContext::of_kind(TypeCheckKind::ExplicitFunctionReturn)
                     .with_annotation(annot_range, "declared return type".to_owned())
+                    .with_slot(return_slot.clone())
             };
             if let Some(expr) = &x.expr {
                 self.expr_check(expr, hint.as_ref().map(|t| (t, tcc)), errors)
@@ -3725,9 +3727,11 @@ impl<'a, Ans: LookupAnswer> AnswersSolver<'a, Ans> {
             }
         } else {
             let annot_range = x.annot.and_then(|k| self.annotation_range(k));
+            let return_slot = format!("function:{}:return", self.module().display(&x.function));
             let tcc: &dyn Fn() -> TypeCheckContext = &|| {
                 TypeCheckContext::of_kind(TypeCheckKind::ExplicitFunctionReturn)
                     .with_annotation(annot_range, "declared return type".to_owned())
+                    .with_slot(return_slot.clone())
             };
             if let Some(expr) = &x.expr {
                 self.expr_check(expr, hint.as_ref().map(|t| (t, tcc)), errors)

@@ -442,6 +442,7 @@ impl<'a> BindingsBuilder<'a> {
                 self.insert_binding_idx(
                     idx,
                     Binding::ReturnExplicit(ReturnExplicit {
+                        function: ShortIdentifier::new(func_name),
                         annot: return_ann,
                         expr: x.value,
                         is_generator,

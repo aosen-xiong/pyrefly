@@ -115,6 +115,8 @@ pub struct TypeCheckContext {
     pub context: Option<ErrorContext>,
     /// Optional secondary annotations to attach to the error.
     pub annotations: Vec<(TextRange, String)>,
+    /// Optional source-level slot for diagnosis traces.
+    pub slot: Option<String>,
 }
 
 impl TypeCheckContext {
@@ -123,6 +125,7 @@ impl TypeCheckContext {
             kind,
             context: None,
             annotations: Vec::new(),
+            slot: None,
         }
     }
 
@@ -133,6 +136,11 @@ impl TypeCheckContext {
 
     pub fn with_annotations(mut self, annotations: Vec<(TextRange, String)>) -> Self {
         self.annotations = annotations;
+        self
+    }
+
+    pub fn with_slot(mut self, slot: String) -> Self {
+        self.slot = Some(slot);
         self
     }
 
