@@ -1305,6 +1305,15 @@ a = True if # E: Parse
 );
 
 testcase!(
+    test_malformed_namedtuple_for_target,
+    r#"
+from typing import NamedTuple
+
+for NamedTuple("  # E: Parse # E: Parse # E: Expected valid functional named tuple definition # E: Parse # E: Parse
+"#,
+);
+
+testcase!(
     test_syntax_error_resulting_in_empty_defintion,
     r#"
 @:a=1 # E: Parse

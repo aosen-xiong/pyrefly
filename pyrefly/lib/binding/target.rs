@@ -351,7 +351,13 @@ impl<'a> BindingsBuilder<'a> {
                     },
                 );
                 // Make sure the RHS is properly bound, so that we can report errors there.
-                let mut user = self.declare_current_idx(Key::Anon(illegal_target.range()));
+                let value_range = assigned
+                    .as_ref()
+                    .map(|assigned| {
+                        TextRange::new(illegal_target.range().end(), assigned.range().end())
+                    })
+                    .unwrap_or_else(|| illegal_target.range());
+                let mut user = self.declare_current_idx(Key::Anon(value_range));
                 if ensure_assigned && let Some(assigned) = &mut assigned {
                     self.ensure_expr(assigned, user.usage());
                 }
